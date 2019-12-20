@@ -23,7 +23,7 @@ Base.prepare(engine, reflect=True)
 
 # Creating a variable for each of the classes to reference them later
 measuremet= Base.classes.measurement
-station= Base.classes.station
+Station= Base.classes.station
 
 # Creates a session link from Python to our database
 session= Session(engine)
@@ -36,15 +36,16 @@ app=Flask(__name__)
 
 # Next add the routing info. for each of the other routes
 # Creating the welcome() function.
+@app.route("/")
 def welcome():
-	return(
-        f"Welcome to the Climate Analysis API!<br/>"
+    test = (f"Welcome to the Hawaii Climate Analysis API!<br/>"
         f"Available Routes:<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/temp/start/end<br/>"
-	)
+        f"/api/v1.0/tobs<br/>" 
+        f"/api/v1.0/temp/start/end")
+    return (test)
+
 # Creates a new route(Route 2)
 @app.route("/api/v1.0/precipitation")
 
@@ -52,9 +53,9 @@ def welcome():
 def precipitation():
     prev_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
     precipitation = session.query(Measurement.date, Measurement.prcp).\
-    filter(Measurement.date >= prev_year).all()
+        filter(Measurement.date >= prev_year).all()
     precip = {date: prcp for date, prcp in precipitation}
-return jsonify(precip)
+    return jsonify(precip)
 
 # Creating route #3
 @app.route("/api/v1.0/stations")
@@ -91,8 +92,7 @@ return jsonify(temps)
 # Adds the start and end parameters
 # For now they are both set to None
 def stats(start=None, end=None):
-# Create a query to select the min., 
-#avg., max. temperatures from SQlite
+# Creates a select statement
     sel=[func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
     
     if not end:
@@ -100,9 +100,17 @@ def stats(start=None, end=None):
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()
         temps = list(np.ravel(results))
-    return jsonify(temps)
+        return jsonify(temps)
+    
+    # calculate TMIN, TAVG, TMAX with start and stop
     results = session.query(*sel).\
         filter(Measurement.date >= start).\
-        filter(Measurement.date <= end).all().\
-        temps = list(np.ravel(results)).\
-        return jsonify(temps)
+        filter(Measurement.date <= end).all()
+    
+    # Unravel results into a 1D array and convert to a list
+    temps = list(np.ravel(results))
+    return jsonify(temps)
+
+
+if __name__ == '__main__':
+    app.run()
